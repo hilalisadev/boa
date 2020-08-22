@@ -2,14 +2,14 @@
 
 use crate::{
     builtins::{object::ObjectData, Value},
-    forward, forward_val, Interpreter, Realm,
+    forward, forward_val, Context,
 };
 use chrono::prelude::*;
 
 // NOTE: Javascript Uses 0-based months, where chrono uses 1-based months. Many of the assertions look wrong because of
 // this.
 
-fn forward_dt_utc(engine: &mut Interpreter, src: &str) -> Option<NaiveDateTime> {
+fn forward_dt_utc(engine: &mut Context, src: &str) -> Option<NaiveDateTime> {
     let date_time = if let Ok(v) = forward_val(engine, src) {
         v
     } else {
@@ -27,7 +27,7 @@ fn forward_dt_utc(engine: &mut Interpreter, src: &str) -> Option<NaiveDateTime> 
     }
 }
 
-fn forward_dt_local(engine: &mut Interpreter, src: &str) -> Option<NaiveDateTime> {
+fn forward_dt_local(engine: &mut Context, src: &str) -> Option<NaiveDateTime> {
     let date_time = forward_dt_utc(engine, src);
 
     // The timestamp is converted to UTC for internal representation
@@ -56,8 +56,7 @@ fn date_display() {
 
 #[test]
 fn date_this_time_value() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let error = forward_val(
         &mut engine,
@@ -77,8 +76,7 @@ fn date_this_time_value() {
 
 #[test]
 fn date_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let dt1 = forward(&mut engine, "Date()");
 
@@ -92,8 +90,7 @@ fn date_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let dt1 = forward_dt_local(&mut engine, "new Date()");
 
@@ -107,8 +104,7 @@ fn date_ctor_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_utc(&mut engine, "new Date('2020-06-08T09:16:15.779-06:30')");
 
@@ -122,8 +118,7 @@ fn date_ctor_call_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_string_invalid() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_local(&mut engine, "new Date('nope')");
     assert_eq!(None, date_time);
@@ -132,8 +127,7 @@ fn date_ctor_call_string_invalid() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_number() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_utc(&mut engine, "new Date(1594199775779)");
     assert_eq!(
@@ -145,8 +139,7 @@ fn date_ctor_call_number() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_date() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_utc(&mut engine, "new Date(new Date(1594199775779))");
 
@@ -159,8 +152,7 @@ fn date_ctor_call_date() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_multiple() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_local(&mut engine, "new Date(2020, 06, 08, 09, 16, 15, 779)");
 
@@ -173,8 +165,7 @@ fn date_ctor_call_multiple() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_call_multiple_90s() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_dt_local(&mut engine, "new Date(99, 06, 08, 09, 16, 15, 779)");
 
@@ -188,8 +179,7 @@ fn date_ctor_call_multiple_90s() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn date_ctor_call_multiple_nan() -> Result<(), Box<dyn std::error::Error>> {
     fn check(src: &str) {
-        let realm = Realm::create();
-        let mut engine = Interpreter::new(realm);
+        let mut engine = Context::new();
         let date_time = forward_dt_local(&mut engine, src);
         assert_eq!(None, date_time);
     }
@@ -207,8 +197,7 @@ fn date_ctor_call_multiple_nan() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_now_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward(&mut engine, "Date.now()");
     let dt1 = u64::from_str_radix(&date_time, 10)?;
@@ -224,8 +213,7 @@ fn date_ctor_now_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_parse_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_val(&mut engine, "Date.parse('2020-06-08T09:16:15.779-07:30')");
 
@@ -235,8 +223,7 @@ fn date_ctor_parse_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_ctor_utc_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let date_time = forward_val(&mut engine, "Date.UTC(2020, 06, 08, 09, 16, 15, 779)");
 
@@ -247,8 +234,7 @@ fn date_ctor_utc_call() -> Result<(), Box<dyn std::error::Error>> {
 #[test]
 fn date_ctor_utc_call_nan() -> Result<(), Box<dyn std::error::Error>> {
     fn check(src: &str) {
-        let realm = Realm::create();
-        let mut engine = Interpreter::new(realm);
+        let mut engine = Context::new();
         let date_time = forward_val(&mut engine, src).expect("Expected Success");
         assert_eq!(Value::Rational(f64::NAN), date_time);
     }
@@ -266,8 +252,7 @@ fn date_ctor_utc_call_nan() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_date_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -283,8 +268,7 @@ fn date_proto_get_date_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_day_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -299,8 +283,7 @@ fn date_proto_get_day_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_full_year_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -315,8 +298,7 @@ fn date_proto_get_full_year_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_hours_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -331,8 +313,7 @@ fn date_proto_get_hours_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_milliseconds_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -347,8 +328,7 @@ fn date_proto_get_milliseconds_call() -> Result<(), Box<dyn std::error::Error>> 
 
 #[test]
 fn date_proto_get_minutes_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -363,8 +343,7 @@ fn date_proto_get_minutes_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_month() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -380,8 +359,7 @@ fn date_proto_get_month() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_seconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -396,8 +374,7 @@ fn date_proto_get_seconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_time() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -417,8 +394,7 @@ fn date_proto_get_time() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_year() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -433,8 +409,7 @@ fn date_proto_get_year() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_timezone_offset() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -464,8 +439,7 @@ fn date_proto_get_timezone_offset() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_date_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -481,8 +455,7 @@ fn date_proto_get_utc_date_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_day_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -497,8 +470,7 @@ fn date_proto_get_utc_day_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_full_year_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -513,8 +485,7 @@ fn date_proto_get_utc_full_year_call() -> Result<(), Box<dyn std::error::Error>>
 
 #[test]
 fn date_proto_get_utc_hours_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -529,8 +500,7 @@ fn date_proto_get_utc_hours_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_milliseconds_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -545,8 +515,7 @@ fn date_proto_get_utc_milliseconds_call() -> Result<(), Box<dyn std::error::Erro
 
 #[test]
 fn date_proto_get_utc_minutes_call() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -561,8 +530,7 @@ fn date_proto_get_utc_minutes_call() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_month() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -578,8 +546,7 @@ fn date_proto_get_utc_month() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_get_utc_seconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -594,8 +561,7 @@ fn date_proto_get_utc_seconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_date() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -627,8 +593,7 @@ fn date_proto_set_date() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_full_year() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -700,8 +665,7 @@ fn date_proto_set_full_year() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_hours() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -755,8 +719,7 @@ fn date_proto_set_hours() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_milliseconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -784,8 +747,7 @@ fn date_proto_set_milliseconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_minutes() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -831,8 +793,7 @@ fn date_proto_set_minutes() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_month() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -869,8 +830,7 @@ fn date_proto_set_month() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_seconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -907,8 +867,7 @@ fn date_proto_set_seconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn set_year() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -933,8 +892,7 @@ fn set_year() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_time() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_local(
         &mut engine,
@@ -950,8 +908,7 @@ fn date_proto_set_time() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_date() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -983,8 +940,7 @@ fn date_proto_set_utc_date() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_full_year() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1056,8 +1012,7 @@ fn date_proto_set_utc_full_year() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_hours() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1111,8 +1066,7 @@ fn date_proto_set_utc_hours() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_milliseconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1140,8 +1094,7 @@ fn date_proto_set_utc_milliseconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_minutes() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1187,8 +1140,7 @@ fn date_proto_set_utc_minutes() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_month() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1225,8 +1177,7 @@ fn date_proto_set_utc_month() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_set_utc_seconds() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_dt_utc(
         &mut engine,
@@ -1263,8 +1214,7 @@ fn date_proto_set_utc_seconds() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_date_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1278,8 +1228,7 @@ fn date_proto_to_date_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_gmt_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1293,8 +1242,7 @@ fn date_proto_to_gmt_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_iso_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1308,8 +1256,7 @@ fn date_proto_to_iso_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_json() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1323,8 +1270,7 @@ fn date_proto_to_json() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1346,8 +1292,7 @@ fn date_proto_to_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_time_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1367,8 +1312,7 @@ fn date_proto_to_time_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_to_utc_string() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1382,8 +1326,7 @@ fn date_proto_to_utc_string() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_proto_value_of() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1397,8 +1340,7 @@ fn date_proto_value_of() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_neg() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,
@@ -1412,8 +1354,7 @@ fn date_neg() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn date_json() -> Result<(), Box<dyn std::error::Error>> {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let actual = forward_val(
         &mut engine,

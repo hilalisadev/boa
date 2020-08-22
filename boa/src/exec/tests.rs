@@ -1,9 +1,7 @@
 use crate::{
     builtins::{Number, Value},
-    exec,
-    exec::Interpreter,
-    forward, forward_val,
-    realm::Realm,
+    context::Context,
+    exec, forward, forward_val,
 };
 
 #[test]
@@ -115,8 +113,7 @@ fn object_field_set() {
 
 #[test]
 fn spread_with_arguments() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let scenario = r#"
             const a = [1, "test", 3, 4];
@@ -142,8 +139,7 @@ fn spread_with_arguments() {
 
 #[test]
 fn array_rest_with_arguments() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let scenario = r#"
                 var b = [4, 5, 6]
@@ -721,8 +717,7 @@ mod in_operator {
 
     #[test]
     fn should_type_error_when_rhs_not_object() {
-        let realm = Realm::create();
-        let mut engine = Interpreter::new(realm);
+        let mut engine = Context::new();
 
         let scenario = r#"
             var x = false;
@@ -739,8 +734,7 @@ mod in_operator {
 
     #[test]
     fn should_set_this_value() {
-        let realm = Realm::create();
-        let mut engine = Interpreter::new(realm);
+        let mut engine = Context::new();
 
         let scenario = r#"
         function Foo() {
@@ -758,8 +752,7 @@ mod in_operator {
     #[test]
     fn new_instance_should_point_to_prototype() {
         // A new instance should point to a prototype object created with the constructor function
-        let realm = Realm::create();
-        let mut engine = Interpreter::new(realm);
+        let mut engine = Context::new();
 
         let scenario = r#"
             function Foo() {}
@@ -886,8 +879,7 @@ fn function_decl_hoisting() {
 
 #[test]
 fn to_bigint() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert!(Value::null().to_bigint(&mut engine).is_err());
     assert!(Value::undefined().to_bigint(&mut engine).is_err());
@@ -898,8 +890,7 @@ fn to_bigint() {
 
 #[test]
 fn to_index() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert_eq!(Value::undefined().to_index(&mut engine).unwrap(), 0);
     assert!(Value::integer(-1).to_index(&mut engine).is_err());
@@ -907,8 +898,7 @@ fn to_index() {
 
 #[test]
 fn to_integer() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert!(Number::equal(
         Value::number(f64::NAN).to_integer(&mut engine).unwrap(),
@@ -945,8 +935,7 @@ fn to_integer() {
 
 #[test]
 fn to_length() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert_eq!(Value::number(f64::NAN).to_length(&mut engine).unwrap(), 0);
     assert_eq!(
@@ -977,8 +966,7 @@ fn to_length() {
 
 #[test]
 fn to_int32() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     macro_rules! check_to_int32 {
         ($from:expr => $to:expr) => {
@@ -1091,8 +1079,7 @@ fn to_int32() {
 
 #[test]
 fn to_string() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert_eq!(Value::null().to_string(&mut engine).unwrap(), "null");
     assert_eq!(
@@ -1109,8 +1096,7 @@ fn to_string() {
 
 #[test]
 fn calling_function_with_unspecified_arguments() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let scenario = r#"
         function test(a, b) {
             return b;
@@ -1124,8 +1110,7 @@ fn calling_function_with_unspecified_arguments() {
 
 #[test]
 fn to_object() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert!(Value::undefined()
         .to_object(&mut engine)
@@ -1139,8 +1124,7 @@ fn to_object() {
 
 #[test]
 fn check_this_binding_in_object_literal() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let init = r#"
         var foo = {
             a: 3,
@@ -1155,8 +1139,7 @@ fn check_this_binding_in_object_literal() {
 
 #[test]
 fn array_creation_benchmark() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let init = r#"
         (function(){
             let testArr = [];
@@ -1173,8 +1156,7 @@ fn array_creation_benchmark() {
 
 #[test]
 fn array_pop_benchmark() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let init = r#"
     (function(){
         let testArray = [83, 93, 27, 29, 2828, 234, 23, 56, 32, 56, 67, 77, 32,
@@ -1207,8 +1189,7 @@ fn array_pop_benchmark() {
 
 #[test]
 fn number_object_access_benchmark() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let init = r#"
     new Number(
         new Number(
@@ -1224,8 +1205,7 @@ fn number_object_access_benchmark() {
 
 #[test]
 fn not_a_function() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
     let init = r#"
         let a = {};
         let b = true;
@@ -1289,8 +1269,7 @@ fn comma_operator() {
 fn assignment_to_non_assignable() {
     // Relates to the behaviour described at
     // https://tc39.es/ecma262/#sec-assignment-operators-static-semantics-early-errors
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     // Tests all assignment operators as per [spec] and [mdn]
     //
@@ -1312,8 +1291,7 @@ fn assignment_to_non_assignable() {
 fn multicharacter_assignment_to_non_assignable() {
     // Relates to the behaviour described at
     // https://tc39.es/ecma262/#sec-assignment-operators-static-semantics-early-errors
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     let test_cases = ["3 **= 5", "3 <<= 5", "3 >>= 5"];
 
@@ -1328,8 +1306,7 @@ fn multicharacter_assignment_to_non_assignable() {
 #[test]
 #[ignore]
 fn multicharacter_bitwise_assignment_to_non_assignable() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     // Disabled - awaiting implementation.
     let test_cases = ["3 >>>= 5", "3 &&= 5", "3 ||= 5", "3 ??= 5"];
@@ -1344,8 +1321,7 @@ fn multicharacter_bitwise_assignment_to_non_assignable() {
 
 #[test]
 fn assign_to_array_decl() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     assert!(forward(&mut engine, "[1] = [2]").starts_with("Syntax Error: "));
     assert!(forward(&mut engine, "[3, 5] = [7, 8]").starts_with("Syntax Error: "));
@@ -1355,8 +1331,7 @@ fn assign_to_array_decl() {
 
 #[test]
 fn assign_to_object_decl() {
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
+    let mut engine = Context::new();
 
     const ERR_MSG: &str =
         "expected token \';\', got \':\' in expression statement at line 1, col 3";

@@ -24,7 +24,7 @@ use crate::{
         property::{Attribute, Property},
         value::{RcString, RcSymbol, Value},
     },
-    exec::Interpreter,
+    context::Context,
     BoaProfiler, Result,
 };
 use gc::{Finalize, Trace};
@@ -58,7 +58,7 @@ impl Symbol {
         self.hash
     }
 
-    fn this_symbol_value(value: &Value, ctx: &mut Interpreter) -> Result<RcSymbol> {
+    fn this_symbol_value(value: &Value, ctx: &mut Context) -> Result<RcSymbol> {
         match value {
             Value::Symbol(ref symbol) => return Ok(symbol.clone()),
             Value::Object(ref object) => {
@@ -84,7 +84,7 @@ impl Symbol {
     ///
     /// [spec]: https://tc39.es/ecma262/#sec-symbol-description
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/Symbol
-    pub(crate) fn call(_: &Value, args: &[Value], ctx: &mut Interpreter) -> Result<Value> {
+    pub(crate) fn call(_: &Value, args: &[Value], ctx: &mut Context) -> Result<Value> {
         let description = match args.get(0) {
             Some(ref value) if !value.is_undefined() => Some(value.to_string(ctx)?),
             _ => None,
@@ -104,7 +104,7 @@ impl Symbol {
     /// [spec]: https://tc39.es/ecma262/#sec-symbol.prototype.tostring
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/toString
     #[allow(clippy::wrong_self_convention)]
-    pub(crate) fn to_string(this: &Value, _: &[Value], ctx: &mut Interpreter) -> Result<Value> {
+    pub(crate) fn to_string(this: &Value, _: &[Value], ctx: &mut Context) -> Result<Value> {
         let symbol = Self::this_symbol_value(this, ctx)?;
         let description = symbol.description().unwrap_or("");
         Ok(Value::from(format!("Symbol({})", description)))
@@ -112,7 +112,7 @@ impl Symbol {
 
     /// Initialise the `Symbol` object on the global object.
     #[inline]
-    pub fn init(interpreter: &mut Interpreter) -> (&'static str, Value) {
+    pub fn init(interpreter: &mut Context) -> (&'static str, Value) {
         // Define the Well-Known Symbols
         // https://tc39.es/ecma262/#sec-well-known-symbols
         let symbol_async_iterator =
@@ -131,7 +131,7 @@ impl Symbol {
         let symbol_to_string_tag = interpreter.construct_symbol(Some("Symbol.toStringTag".into()));
         let symbol_unscopables = interpreter.construct_symbol(Some("Symbol.unscopables".into()));
 
-        let global = interpreter.global();
+        let global = interpreter.global_object();
         let _timer = BoaProfiler::global().start_event(Self::NAME, "init");
 
         // Create prototype object

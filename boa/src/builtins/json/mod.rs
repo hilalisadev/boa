@@ -19,7 +19,7 @@ use crate::{
         property::{Property, PropertyKey},
         value::Value,
     },
-    exec::Interpreter,
+    context::Context,
     BoaProfiler, Result,
 };
 use serde_json::{self, Value as JSONValue};
@@ -47,7 +47,7 @@ impl Json {
     ///
     /// [spec]: https://tc39.es/ecma262/#sec-json.parse
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
-    pub(crate) fn parse(_: &Value, args: &[Value], ctx: &mut Interpreter) -> Result<Value> {
+    pub(crate) fn parse(_: &Value, args: &[Value], ctx: &mut Context) -> Result<Value> {
         match serde_json::from_str::<JSONValue>(
             &args
                 .get(0)
@@ -77,7 +77,7 @@ impl Json {
     /// [polyfill]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse
     fn walk(
         reviver: &Value,
-        ctx: &mut Interpreter,
+        ctx: &mut Context,
         holder: &mut Value,
         key: &PropertyKey,
     ) -> Result<Value> {
@@ -118,7 +118,7 @@ impl Json {
     ///
     /// [spec]: https://tc39.es/ecma262/#sec-json.stringify
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
-    pub(crate) fn stringify(_: &Value, args: &[Value], ctx: &mut Interpreter) -> Result<Value> {
+    pub(crate) fn stringify(_: &Value, args: &[Value], ctx: &mut Context) -> Result<Value> {
         let object = match args.get(0) {
             Some(obj) if obj.is_symbol() || obj.is_function() || obj.is_undefined() => {
                 return Ok(Value::undefined())
@@ -182,8 +182,8 @@ impl Json {
 
     /// Initialise the `JSON` object on the global object.
     #[inline]
-    pub(crate) fn init(interpreter: &mut Interpreter) -> (&'static str, Value) {
-        let global = interpreter.global();
+    pub(crate) fn init(interpreter: &mut Context) -> (&'static str, Value) {
+        let global = interpreter.global_object();
         let _timer = BoaProfiler::global().start_event(Self::NAME, "init");
         let json = Value::new_object(Some(global));
 

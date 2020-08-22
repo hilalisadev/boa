@@ -2,7 +2,7 @@ use super::BigInt;
 
 use crate::{
     builtins::{Number, Value},
-    exec::Interpreter,
+    context::Context,
 };
 use num_traits::cast::{FromPrimitive, ToPrimitive};
 
@@ -17,7 +17,7 @@ impl BigInt {
     ///
     /// [spec]: https://tc39.es/ecma262/#sec-stringtobigint
     #[inline]
-    pub(crate) fn from_string(string: &str, _ctx: &mut Interpreter) -> Result<Self, Value> {
+    pub(crate) fn from_string(string: &str, _ctx: &mut Context) -> Result<Self, Value> {
         if string.is_empty() {
             return Ok(BigInt::from(0));
         }

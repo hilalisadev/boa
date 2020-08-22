@@ -33,6 +33,11 @@
     clippy::let_unit_value,
     missing_doc_code_examples
 )]
+// Remove me when we remove `forward_val`, `froward` and `exec`
+//
+// This is added because it generates to many warnings,
+// beause these functions are used in almost every test.
+#![allow(deprecated)]
 
 pub mod builtins;
 pub mod environment;
@@ -41,19 +46,19 @@ pub mod profiler;
 pub mod realm;
 pub mod syntax;
 
-use crate::{builtins::value::Value, syntax::ast::node::StatementList};
-pub use crate::{
-    exec::{Executable, Interpreter},
-    profiler::BoaProfiler,
-    realm::Realm,
-    syntax::{
-        lexer::Lexer,
-        parser::{ParseError, Parser},
-    },
-};
+mod context;
+
 use std::result::Result as StdResult;
 
+pub(crate) use crate::{
+    exec::Executable,
+    profiler::BoaProfiler,
+    syntax::{ast::node::StatementList, Parser},
+};
 pub use gc::{custom_trace, unsafe_empty_trace, Finalize, Trace};
+
+// Export things to root level
+pub use crate::{builtins::value::Value, context::Context};
 
 /// The result of a Javascript expression is represented like this so it can succeed (`Ok`) or fail (`Err`)
 #[must_use]
@@ -65,9 +70,10 @@ fn parser_expr(src: &str) -> StdResult<StatementList, String> {
         .map_err(|e| e.to_string())
 }
 
-/// Execute the code using an existing Interpreter
-/// The str is consumed and the state of the Interpreter is changed
-pub fn forward(engine: &mut Interpreter, src: &str) -> String {
+/// Execute the code using an existing Context
+/// The str is consumed and the state of the Context is changed
+#[deprecated(note = "Please use Context::eval() instead")]
+pub fn forward(engine: &mut Context, src: &str) -> String {
     // Setup executor
     let expr = match parser_expr(src) {
         Ok(res) => res,
@@ -79,12 +85,13 @@ pub fn forward(engine: &mut Interpreter, src: &str) -> String {
     )
 }
 
-/// Execute the code using an existing Interpreter.
-/// The str is consumed and the state of the Interpreter is changed
+/// Execute the code using an existing Context.
+/// The str is consumed and the state of the Context is changed
 /// Similar to `forward`, except the current value is returned instad of the string
 /// If the interpreter fails parsing an error value is returned instead (error object)
 #[allow(clippy::unit_arg, clippy::drop_copy)]
-pub fn forward_val(engine: &mut Interpreter, src: &str) -> Result<Value> {
+#[deprecated(note = "Please use Context::eval() instead")]
+pub fn forward_val(engine: &mut Context, src: &str) -> Result<Value> {
     let main_timer = BoaProfiler::global().start_event("Main", "Main");
     // Setup executor
     let result = match parser_expr(src) {
@@ -102,10 +109,11 @@ pub fn forward_val(engine: &mut Interpreter, src: &str) -> Result<Value> {
     result
 }
 
-/// Create a clean Interpreter and execute the code
+/// Create a clean Context and execute the code
+#[deprecated(note = "Please use Context::eval() instead")]
 pub fn exec(src: &str) -> String {
-    // Create new Realm
-    let realm = Realm::create();
-    let mut engine = Interpreter::new(realm);
-    forward(&mut engine, src)
+    match Context::new().eval(src) {
+        Ok(value) => value.display().to_string(),
+        Err(error) => error.display().to_string(),
+    }
 }
