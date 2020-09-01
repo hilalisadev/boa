@@ -2,12 +2,11 @@ use boa::{
     builtins::{
         object::{Class, ClassBuilder},
         property::Attribute,
-        value::Value,
     },
     exec::Interpreter,
     forward_val,
     realm::Realm,
-    Result,
+    Result, Value,
 };
 
 use gc::{Finalize, Trace};
@@ -140,7 +139,7 @@ fn main() {
 		if (!Person.is('Hello')) {
 			console.log('\'Hello\' string is not a Person class instance.');
 		}
-        
+
         console.log(Person.staticProperty);
         console.log(person.inheritedProperty);
 	    console.log(Person.prototype.inheritedProperty === person.inheritedProperty);

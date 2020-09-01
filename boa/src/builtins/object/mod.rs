@@ -18,10 +18,10 @@ use crate::{
         function::Function,
         map::ordered_map::OrderedMap,
         property::{Attribute, Property, PropertyKey},
-        value::{RcBigInt, RcString, RcSymbol, Value},
         BigInt, Date, RegExp,
     },
     exec::Interpreter,
+    value::{RcBigInt, RcString, RcSymbol, Value},
     BoaProfiler, Result,
 };
 use gc::{Finalize, Trace};
@@ -33,7 +33,7 @@ use std::result::Result as StdResult;
 use super::function::{
     make_builtin_fn, make_constructor_fn, BuiltInFunction, FunctionFlags, NativeFunction,
 };
-use crate::builtins::value::same_value;
+use crate::value::same_value;
 
 mod gcobject;
 mod internal_methods;

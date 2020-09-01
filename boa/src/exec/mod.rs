@@ -28,7 +28,6 @@ use crate::{
         function::{Function, FunctionFlags, NativeFunction},
         object::{Class, ClassBuilder, GcObject, Object, ObjectData, PROTOTYPE},
         property::{Property, PropertyKey},
-        value::{PreferredType, RcString, RcSymbol, Type, Value},
         Console, Symbol,
     },
     realm::Realm,
@@ -36,6 +35,7 @@ use crate::{
         constant::Const,
         node::{FormalParameter, Node, StatementList},
     },
+    value::{PreferredType, RcString, RcSymbol, Type, Value},
     BoaProfiler, Result,
 };
 use std::result::Result as StdResult;
@@ -365,7 +365,7 @@ impl Interpreter {
     /// struct MyClass;
     ///
     /// impl Class for MyClass {
-    ///    // ...    
+    ///    // ...
     /// }
     ///
     /// context.register_global_class::<MyClass>();

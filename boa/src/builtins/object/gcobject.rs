@@ -4,14 +4,11 @@
 
 use super::{Object, PROTOTYPE};
 use crate::{
-    builtins::{
-        function::{create_unmapped_arguments_object, BuiltInFunction, Function},
-        Value,
-    },
+    builtins::function::{create_unmapped_arguments_object, BuiltInFunction, Function},
     environment::{
         function_environment_record::BindingStatus, lexical_environment::new_function_environment,
     },
-    Executable, Interpreter, Result,
+    Executable, Interpreter, Result, Value,
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
