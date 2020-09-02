@@ -37,7 +37,7 @@
 //
 // This is added because it generates to many warnings,
 // beause these functions are used in almost every test.
-#![allow(deprecated)]
+#![cfg_attr(any(test), allow(deprecated))]
 
 pub mod builtins;
 pub mod environment;
