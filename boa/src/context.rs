@@ -42,7 +42,7 @@ pub struct Context {
 
     /// Symbol hash.
     ///
-    /// For now this is an incremental u32 number.
+    /// For now this is an incremented u32 number.
     symbol_count: u32,
 
     /// console object state.
@@ -138,8 +138,8 @@ impl Context {
         }
     }
 
-    /// Retrun the global object.
-    pub(crate) fn global_object(&self) -> &Value {
+    /// Return the global object.
+    pub fn global_object(&self) -> &Value {
         &self.realm.global_obj
     }
 
