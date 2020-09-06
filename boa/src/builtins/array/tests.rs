@@ -1,4 +1,4 @@
-use crate::{context::Context, forward};
+use crate::{builtins::value::Value, context::Context, forward};
 
 #[test]
 fn is_array() {
@@ -8,34 +8,61 @@ fn is_array() {
         var new_arr = new Array();
         var many = ["a", "b", "c"];
         "#;
-    eprintln!("{}", forward(&mut engine, init));
-    assert_eq!(forward(&mut engine, "Array.isArray(empty)"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray(new_arr)"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray(many)"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray([1, 2, 3])"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray([])"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray({})"), "false");
-    // assert_eq!(forward(&mut engine, "Array.isArray(new Array)"), "true");
-    assert_eq!(forward(&mut engine, "Array.isArray()"), "false");
+    engine.eval(init).unwrap();
     assert_eq!(
-        forward(&mut engine, "Array.isArray({ constructor: Array })"),
-        "false"
+        engine.eval("Array.isArray(empty)").unwrap(),
+        Value::Boolean(true)
     );
     assert_eq!(
-        forward(
-            &mut engine,
-            "Array.isArray({ push: Array.prototype.push, concat: Array.prototype.concat })"
-        ),
-        "false"
-    );
-    assert_eq!(forward(&mut engine, "Array.isArray(17)"), "false");
-    assert_eq!(
-        forward(&mut engine, "Array.isArray({ __proto__: Array.prototype })"),
-        "false"
+        engine.eval("Array.isArray(new_arr)").unwrap(),
+        Value::Boolean(true)
     );
     assert_eq!(
-        forward(&mut engine, "Array.isArray({ length: 0 })"),
-        "false"
+        engine.eval("Array.isArray(many)").unwrap(),
+        Value::Boolean(true)
+    );
+    assert_eq!(
+        engine.eval("Array.isArray([1, 2, 3])").unwrap(),
+        Value::Boolean(true)
+    );
+    assert_eq!(
+        engine.eval("Array.isArray([])").unwrap(),
+        Value::Boolean(true)
+    );
+    assert_eq!(
+        engine.eval("Array.isArray({})").unwrap(),
+        Value::Boolean(false)
+    );
+    // assert_eq!(engine.eval("Array.isArray(new Array)"), "true");
+    assert_eq!(
+        engine.eval("Array.isArray()").unwrap(),
+        Value::Boolean(false)
+    );
+    assert_eq!(
+        engine
+            .eval("Array.isArray({ constructor: Array })")
+            .unwrap(),
+        Value::Boolean(false)
+    );
+    assert_eq!(
+        engine
+            .eval("Array.isArray({ push: Array.prototype.push, concat: Array.prototype.concat })")
+            .unwrap(),
+        Value::Boolean(false)
+    );
+    assert_eq!(
+        engine.eval("Array.isArray(17)").unwrap(),
+        Value::Boolean(false)
+    );
+    assert_eq!(
+        engine
+            .eval("Array.isArray({ __proto__: Array.prototype })")
+            .unwrap(),
+        Value::Boolean(false)
+    );
+    assert_eq!(
+        engine.eval("Array.isArray({ length: 0 })").unwrap(),
+        Value::Boolean(false)
     );
 }
 
@@ -48,18 +75,34 @@ fn concat() {
     var empty = new Array();
     var one = new Array(1);
     "#;
-    eprintln!("{}", forward(&mut engine, init));
+    engine.eval(init).unwrap();
     // Empty ++ Empty
-    let ee = forward(&mut engine, "empty.concat(empty)");
+    let ee = engine
+        .eval("empty.concat(empty)")
+        .unwrap()
+        .to_string(&mut engine)
+        .unwrap();
     assert_eq!(ee, "[]");
     // Empty ++ NonEmpty
-    let en = forward(&mut engine, "empty.concat(one)");
+    let en = engine
+        .eval("empty.concat(one)")
+        .unwrap()
+        .to_string(&mut engine)
+        .unwrap();
     assert_eq!(en, "[a]");
     // NonEmpty ++ Empty
-    let ne = forward(&mut engine, "one.concat(empty)");
+    let ne = engine
+        .eval("one.concat(empty)")
+        .unwrap()
+        .to_string(&mut engine)
+        .unwrap();
     assert_eq!(ne, "a.b.c");
     // NonEmpty ++ NonEmpty
-    let nn = forward(&mut engine, "one.concat(one)");
+    let nn = engine
+        .eval("one.concat(one)")
+        .unwrap()
+        .to_string(&mut engine)
+        .unwrap();
     assert_eq!(nn, "a.b.c");
 }
 
